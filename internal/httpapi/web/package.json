@@ -1,0 +1,24 @@
+{
+  "name": "scrumboy-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/sync-vendor.mjs",
+    "sync:vendor": "node scripts/sync-vendor.mjs",
+    "verify:vendor": "node scripts/verify-vendor.mjs",
+    "build": "node scripts/verify-vendor.mjs && tsc",
+    "test": "node scripts/verify-vendor.mjs && vitest run",
+    "lint:delete-confirms": "node scripts/check-delete-confirms.mjs"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.9.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "dompurify": "3.4.3",
+    "markdown-it": "14.1.1",
+    "mermaid": "11.15.0",
+    "uplot": "^1.6.32"
+  }
+}

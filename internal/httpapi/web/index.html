@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="app-version" content="{{VERSION}}" />
+    <title>Scrumboy</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="google" content="notranslate" />
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <link rel="stylesheet" href="/styles.css?v={{VERSION}}" />
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Scrumboy" />
+    <meta property="og:description" content="Pastebin-style Kanban boards for quick collaboration. Create & share with zero sign-up." />
+    <meta property="og:image" content="https://scrumboy.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:url" content="https://scrumboy.com/" />
+    <meta property="og:site_name" content="Scrumboy" />
+    <meta property="og:locale" content="en_US" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Scrumboy" />
+    <meta name="twitter:description" content="Pastebin-style Kanban boards for quick collaboration. Create & share with zero sign-up." />
+    <meta name="twitter:image" content="https://scrumboy.com/og-image.png" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="bulkEditBar" class="bulk-edit-bar" style="display: none" aria-live="polite">
+      <button type="button" class="btn bulk-edit-bar__btn" id="bulkEditBarBtn"></button>
+    </div>
+
+    <dialog id="bulkEditDialog" class="dialog">
+      <form method="dialog" class="dialog__form" id="bulkEditForm">
+        <div class="dialog__header">
+          <div class="dialog__title" id="bulkEditDialogTitle">Bulk edit</div>
+          <button class="btn btn--ghost" type="button" id="closeBulkEditBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="muted bulk-edit-dialog__hint" id="bulkEditHint"></p>
+
+        <div class="bulk-edit-field" id="bulkEditAssigneeRow" style="display: none;">
+          <label class="bulk-edit-field__check">
+            <input type="checkbox" id="bulkApplyAssignee" />
+            <span>Assign user</span>
+          </label>
+          <select class="select" id="bulkAssignee" aria-label="Assign to">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+
+        <div class="bulk-edit-field" id="bulkEditSprintRow" style="display: none;">
+          <label class="bulk-edit-field__check">
+            <input type="checkbox" id="bulkApplySprint" />
+            <span>Assign sprint</span>
+          </label>
+          <select class="select" id="bulkSprint" aria-label="Sprint">
+            <option value="">—</option>
+          </select>
+        </div>
+
+        <div class="bulk-edit-field">
+          <label class="bulk-edit-field__check">
+            <input type="checkbox" id="bulkApplyStatus" />
+            <span>Change status</span>
+          </label>
+          <select class="select" id="bulkStatus" aria-label="Status"></select>
+        </div>
+
+        <div class="bulk-edit-field" id="bulkEditTagsRow" style="display: none;">
+          <label class="bulk-edit-field__check">
+            <input type="checkbox" id="bulkApplyTags" />
+            <span>Add tags</span>
+          </label>
+          <div class="tags-input-container">
+            <div class="tags-input-row">
+              <input class="input tags-input" id="bulkTagsInput" autocomplete="off" placeholder="Type tag and press Enter" />
+              <button class="btn tags-add-btn" type="button" id="bulkAddTagBtn">Add</button>
+            </div>
+            <div class="tags-chips" id="bulkTagsChips"></div>
+          </div>
+        </div>
+
+        <div class="bulk-edit-field" id="bulkEditEstimationRow" style="display: none;">
+          <label class="bulk-edit-field__check">
+            <input type="checkbox" id="bulkApplyEstimation" />
+            <span>Set estimation points</span>
+          </label>
+          <select class="select" id="bulkEstimation" aria-label="Estimation points">
+            <option value="">No estimate</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="8">8</option>
+            <option value="13">13</option>
+            <option value="20">20</option>
+            <option value="40">40</option>
+          </select>
+        </div>
+
+        <div class="dialog__footer">
+          <button class="btn btn--ghost" type="button" id="cancelBulkEditBtn">Cancel</button>
+          <button class="btn" type="submit" id="saveBulkEditBtn" disabled>Apply</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="todoDialog" class="dialog">
+      <form method="dialog" class="dialog__form" id="todoForm">
+        <div class="dialog__header">
+          <div class="dialog__title" id="todoDialogTitle">Todo</div>
+          <div class="dialog__header-right">
+            <span class="todo-dialog-updated muted" id="todoDialogUpdated" aria-hidden="true"><span class="todo-dialog-datetime-value"></span></span>
+            <button class="btn btn--ghost" type="button" id="closeTodoBtn" aria-label="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="todo-dialog__body">
+        <label class="field">
+          <div class="field__label">Title</div>
+          <input class="input" id="todoTitle" name="title" required maxlength="200" autocomplete="off" />
+        </label>
+
+        <div class="field todo-notes-field">
+          <div class="field__label-row">
+            <label class="field__label" for="todoBody">Notes</label>
+            <div class="todo-notes-tabs" id="todoBodyToggle" hidden role="tablist" aria-label="Notes editor mode">
+              <button class="todo-notes-tab is-active" type="button" id="todoBodyWriteTab" role="tab" aria-pressed="true">markdown</button>
+              <button class="todo-notes-tab" type="button" id="todoBodyPreviewTab" role="tab" aria-pressed="false">preview</button>
+            </div>
+          </div>
+          <div class="todo-notes-editor">
+            <textarea class="textarea todo-notes-input" id="todoBody" name="body" rows="6" maxlength="20000"></textarea>
+            <div class="todo-markdown-preview todo-notes-input" id="todoBodyPreview" hidden aria-live="polite"></div>
+          </div>
+        </div>
+
+        <label class="field">
+          <div class="field__label">Tags</div>
+          <div class="tags-input-container">
+            <div class="tags-input-row">
+              <input class="input tags-input" id="todoTags" name="tags" autocomplete="off" placeholder="Type tag and press Enter or Tab" />
+              <button class="btn tags-add-btn" type="button" id="addTagBtn">Add</button>
+            </div>
+            <div class="tags-chips" id="tagsChips"></div>
+          </div>
+        </label>
+
+        <label class="field" id="todoLinksField" style="display: none;">
+          <div class="field__label">Linked Stories</div>
+          <div class="tags-input-container">
+            <div class="tags-input-row">
+              <input class="input tags-input" id="linksSearchInput" autocomplete="off" placeholder="Search by #id or title..." />
+              <button class="btn tags-add-btn" type="button" id="addLinkBtn">Add</button>
+            </div>
+            <div class="tags-chips" id="linksChips"></div>
+          </div>
+        </label>
+
+        <label class="field" id="todoAssigneeField" style="display: none;">
+          <div class="field__label">Assigned to</div>
+          <select class="select" id="todoAssignee" name="assigneeUserId">
+            <option value="">Unassigned</option>
+          </select>
+        </label>
+
+        <label class="field" id="todoSprintField" style="display: none;">
+          <div class="field__label">Sprint</div>
+          <select class="select" id="todoSprint" name="sprintId">
+            <option value="">—</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <div class="field__label">Status</div>
+          <select class="select" id="todoStatus" name="status">
+            <option value="BACKLOG">Backlog</option>
+            <option value="NOT_STARTED">Not Started</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="TESTING">Testing</option>
+            <option value="DONE">Done</option>
+          </select>
+        </label>
+
+        <label class="field" id="todoEstimationField">
+          <div class="field__label">Estimation Points</div>
+          <select class="select" id="todoEstimationPoints" name="estimationPoints">
+            <option value="">No estimate</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="8">8</option>
+            <option value="13">13</option>
+            <option value="20">20</option>
+            <option value="40">40</option>
+          </select>
+        </label>
+        </div>
+
+        <div class="dialog__footer">
+          <button class="btn btn--danger" type="button" id="deleteTodoBtn">Delete</button>
+          <div class="todo-dialog-dates muted" id="todoDialogCreated" aria-hidden="true"><span class="todo-dialog-datetime-value"></span></div>
+          <button class="btn" type="submit" value="save" id="saveTodoBtn">Save</button>
+          <button class="btn btn--ghost todo-share-btn" type="button" id="shareTodoBtn" aria-label="Share story link">↗</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="wallDialog" class="dialog dialog--wall dialog--wall-fullscreen" data-no-outside-close>
+      <div class="wall-dialog__shell" data-dialog-content-root>
+        <img
+          id="wallLogo"
+          class="wall-logo"
+          src="/scrumbabylogo.png"
+          alt="Scrumbaby"
+          draggable="false"
+        />
+        <div class="wall-shortcuts" aria-hidden="true">
+          <br>
+          create note: <i>right-click on canvas</i>
+          <br>
+          change color: <i>single-click note</i>
+          <br>
+          edit note: <i>double-click note</i>
+          <br>
+          delete note: <i>right-click note or drag to trash</i>
+          <br>
+          draw lines: <i>shift + drag from note to note</i>
+          <br>
+          multiple select: <i>ctrl/cmd + left-click note or click-drag on canvas to box-select notes</i>
+          <br>
+          canvas mode: <i>dashed square = select; hand = pan / swipe / pinch</i>
+          <br>
+          pan canvas: <i>scroll wheel, middle-drag, Pan mode drag, or space + drag</i>
+          <br>
+          zoom: <i>ctrl/cmd + scroll; Pan mode also supports two-finger pinch; fit view: F or ⊡ button</i>
+        </div>
+        <div id="wallSurface" class="wall-surface" aria-label="Sticky note wall"></div>
+        <button class="wall-mode-toggle-btn" type="button" id="wallModeToggleBtn" aria-label="Canvas mode: Select" aria-pressed="false" title="Canvas mode: Select — drag empty canvas to select notes"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-icon lucide-square-dashed"><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/></svg></button>
+        <button class="wall-fit-btn" type="button" id="wallFitViewBtn" aria-label="Fit view to notes" title="Fit view (F)">⊡</button>
+        <button class="wall-close-btn" type="button" id="closeWallBtn" aria-label="Close">✕</button>
+        <img
+          id="wallTrash"
+          class="wall-trash"
+          src="/scrumbabytrash.png"
+          alt="Drag a note here to delete"
+          draggable="false"
+        />
+      </div>
+    </dialog>
+
+    <dialog id="settingsDialog" class="dialog">
+      <div class="dialog__form">
+        <div class="dialog__header">
+          <div class="dialog__title">Settings</div>
+          <button class="btn btn--ghost" type="button" id="closeSettingsBtn" aria-label="Close">✕</button>
+        </div>
+        <div class="dialog__content">
+          <!-- Settings content will go here -->
+        </div>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="contextMenu" class="context-menu" style="display: none;">
+      <button class="context-menu__item" id="contextMenuNewTodo">New Todo</button>
+    </div>
+
+    <script src="/vendor/sortable.min.js"></script>
+    <script src="/vendor/uplot.min.js"></script>
+    <script src="/vendor/markdown-it.min.js"></script>
+    <script src="/vendor/purify.min.js"></script>
+    <link rel="stylesheet" href="/vendor/uplot.min.css">
+    <script type="module" src="/app.js?v={{VERSION}}"></script>
+  </body>
+</html>

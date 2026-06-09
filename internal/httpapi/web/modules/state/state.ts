@@ -1,0 +1,109 @@
+import { Board, Project, Todo, User, ProjectView, MobileTab, RouteName, DashboardSummary, DashboardTodo, TodoStatus } from '../types.js';
+
+export interface BoardMember {
+  userId: number;
+  name: string;
+  email: string;
+  image?: string;
+  role: string;
+}
+
+export interface State {
+  route: RouteName | null;
+  projectId: number | null;
+  slug: string | null;
+  board: Board | null;
+  tag: string;
+  search: string;
+  openTodoSegment: string | null;
+  editingTodo: Todo | null;
+  mobileTab: MobileTab;
+  availableTags: string[];
+  availableTagsMap: Record<string, string>;
+  autocompleteSuggestion: string | null;
+  tagColors: Record<string, string>;
+  projectView: ProjectView;
+  user: User | null;
+  projects: Project[] | null;
+  settingsProjectId: number | null;
+  authStatusAvailable: boolean;
+  // Internal properties
+  _authStatusChecked?: boolean;
+  _bootstrapAvailable?: boolean;
+  _pushConfigured?: boolean;
+  _oidcEnabled?: boolean;
+  _localAuthEnabled?: boolean;
+  _wallEnabled?: boolean;
+  _markdownNotesEnabled?: boolean;
+  _mermaidNotesEnabled?: boolean;
+  projectsTab?: string;
+  settingsActiveTab?: string;
+  // DOM objects require "lib": ["DOM"] in tsconfig.json
+  backupImportBtn?: HTMLElement | null;
+  backupData?: unknown;
+  backupPreview?: unknown;
+  trelloImportBtn?: HTMLElement | null;
+  trelloImportData?: string | null;
+  trelloImportPreview?: unknown;
+  trelloImportResult?: unknown;
+  boardMembers: BoardMember[];
+  dashboardSummary: DashboardSummary | null;
+  dashboardTodos: DashboardTodo[];
+  dashboardNextCursor: string | null;
+  dashboardLoading: boolean;
+  /** Assigned-todo ordering on the dashboard: activity (updated_at) or board (per project lane + rank). */
+  dashboardTodoSort: 'activity' | 'board';
+  boardLaneMeta: Record<TodoStatus, { hasMore: boolean; nextCursor: string | null; loading: boolean; totalCount?: number }>;
+}
+
+
+let _current: State = {
+  route: null,
+  projectId: null,
+  slug: null,
+  board: null,
+  tag: "",
+  search: "",
+  openTodoSegment: null,
+  editingTodo: null,
+  mobileTab: "backlog",
+  availableTags: [],
+  availableTagsMap: {},
+  autocompleteSuggestion: null,
+  tagColors: {},
+  projectView: (localStorage.getItem("projectView") || "list") as ProjectView,
+  user: null,
+  projects: null,
+  settingsProjectId: null,
+  authStatusAvailable: false,
+  boardMembers: [],
+  trelloImportBtn: null,
+  trelloImportData: null,
+  trelloImportPreview: null,
+  trelloImportResult: null,
+  dashboardSummary: null,
+  dashboardTodos: [],
+  dashboardNextCursor: null,
+  dashboardLoading: false,
+  dashboardTodoSort: ((): 'activity' | 'board' => {
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('scrumboy.dashboardTodoSort') === 'board') {
+        return 'board';
+      }
+    } catch {
+      /* ignore */
+    }
+    return 'activity';
+  })(),
+  boardLaneMeta: {
+    backlog: { hasMore: false, nextCursor: null, loading: false },
+    not_started: { hasMore: false, nextCursor: null, loading: false },
+    doing: { hasMore: false, nextCursor: null, loading: false },
+    testing: { hasMore: false, nextCursor: null, loading: false },
+    done: { hasMore: false, nextCursor: null, loading: false },
+  },
+};
+
+// DEPRECATED: Direct access to current is deprecated. Use selectors/mutations instead.
+// This export will be removed after circular dependency cleanup in a future phase.
+export { _current as current };

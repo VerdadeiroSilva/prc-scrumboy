@@ -4,7 +4,7 @@ services:
     build: .
     container_name: scrumboy
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8888:8080"
     environment:
       - BIND_ADDR=:8080
       - DATA_DIR=/data
